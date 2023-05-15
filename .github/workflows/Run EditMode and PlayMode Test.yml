@@ -40,7 +40,7 @@ jobs:
           testMode: All
 
           # テスト実行時に利用したい Docker イメージを明示的に指定できる
-          customImage: 'unityci/editor:2021.3.23f1-base-0'
+          # customImage: 'unityci/editor:2021.3.23f1-base-0'
 
       # テストの実行結果をアーティファクトにアップロードしてダウンロードして参照できるようにする
       - uses: actions/upload-artifact@v2
