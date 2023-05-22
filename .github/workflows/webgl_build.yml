@@ -1,6 +1,6 @@
 name: Run the WebGL build
 on:
-push:
+  push:
   workflow_dispatch: {}
 jobs:
   build:
@@ -10,14 +10,16 @@ jobs:
       # actions/checkout@v2 を利用して作業ディレクトリに
       # Unity プロジェクトの中身をダウンロードしてくる
       - name: Check out my unity project.
-        uses: actions/checkout@v2     
-      
+        uses: actions/checkout@v2
+
+      # GameCI の Builder を利用して、
+      # Unity プロジェクトのビルドを実行する
       - name: Run the WebGL build
         uses: game-ci/unity-builder@v2
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
-        projectPash: ./src
+          projectPash: ./src
           # 今回は WebGL ビルドを行いたいため WebGL を指定する
           # WebGL 以外の指定可能な値は下記に記載の値が利用可能
           # ref: https://docs.unity3d.com/ScriptReference/BuildTarget.html
