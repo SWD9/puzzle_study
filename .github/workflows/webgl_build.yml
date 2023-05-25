@@ -19,15 +19,8 @@ jobs:
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
-<<<<<<< HEAD
-<<<<<<< HEAD
           projectPath: ./src
-=======
-          projectPash: ./src
->>>>>>> 0322e6f748e931466c157476555d82f2236004d8
-=======
-          projectPath: ./src
->>>>>>> 95ecbb2e2315d744c511c86456db21fd76569b41
+          
           # 今回は WebGL ビルドを行いたいため WebGL を指定する
           # WebGL 以外の指定可能な値は下記に記載の値が利用可能
           # ref: https://docs.unity3d.com/ScriptReference/BuildTarget.html
