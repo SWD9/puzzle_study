@@ -1,35 +1,27 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class AnimationController
 {
-    const float DELAT_TIME_MAX = 1.0f;
-    float _time = 0.0f;
+    int _time = 0;
     float _inv_time_max = 1.0f;
 
-    public void Set(float max_time)
+    public void Set(int max_time)
     {
-        Debug.Assert(0.0f < max_time);
+        Debug.Assert(0 < max_time);
 
         _time = max_time;
-        _inv_time_max = 1.0f / max_time;
+        _inv_time_max = 1.0f / (float)max_time;
     }
-    public bool Update(float delat_time)
+    public bool Update()
     {
-        if(DELAT_TIME_MAX < delat_time)delat_time = DELAT_TIME_MAX;
-
-        _time -= delat_time;
-
-        if (_time <= 0.0f)
-        {
-            _time = 0.0f;
-            return false;
-        }
-        return true;
+        _time = Math.Max(--_time,0);
+        return (0 < _time);
     }
     public float GetNormalized()
     {
-        return _time * _inv_time_max;
+        return _inv_time_max * (float)_time;
     }
 }
