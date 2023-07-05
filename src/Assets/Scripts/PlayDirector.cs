@@ -4,6 +4,20 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+struct FallData
+{
+    public readonly int X { get; }
+    public readonly int Y { get; }
+    public readonly int Dest { get; }
+    public FallData(int x,int y,int dest)
+    {
+        X = x;
+        Y = y;
+        Dest = dest;
+    }
+}
+
+[RequireComponent(typeof(BoardController))]
 public class PlayDirector : MonoBehaviour
 {
     interface IState
@@ -12,6 +26,7 @@ public class PlayDirector : MonoBehaviour
         {
             Control = 0,
             GameOver = 1,
+            Falling = 2,
 
             MAX,
 
@@ -23,23 +38,24 @@ public class PlayDirector : MonoBehaviour
     [SerializeField] GameObject player = default!;
     PlayerController _playerController = null;
     LogicalInput _logicalInput = new();
+    BoardController _boardController = default!;
     NextQueue _nextQueue = new();
     [SerializeField] PuyoPair[] nextPuyoPairs = { default!, default! };
-    IState.E_State _current_state = IState.E_State.Control;
+    IState.E_State _current_state = IState.E_State.Falling;
     static readonly IState[] states = new IState[(int)IState.E_State.MAX]{
         new ControlState(),
         new GameOverState(),
+        new FallingState(),
     };
     void Start()
     {
         _playerController = player.GetComponent<PlayerController>();
+        _boardController = GetComponent<BoardController>();
         _logicalInput.Clear();
         _playerController.SetLogicalInput(_logicalInput);
 
         _nextQueue.Initialize();
         InitialzeState();
-        Spawn(_nextQueue.Update());
-        UpdateNextsView();
     }
     void UpdateNextsView()
     {
@@ -73,12 +89,6 @@ public class PlayDirector : MonoBehaviour
     {
         UpdateInput();
         UpdateState();
-        /*
-        if (!player.activeSelf)
-        {
-            Spawn(_nextQueue.Update());
-            UpdateNextsView();
-        }*/
     }
     bool Spawn(Vector2Int next) => _playerController.Spawn((PuyoType)next[0], (PuyoType)next[1]);
 
@@ -95,7 +105,7 @@ public class PlayDirector : MonoBehaviour
         }
         public IState.E_State Update(PlayDirector parent)
         {
-            return parent.player.activeSelf ? IState.E_State.Unchanged : IState.E_State.Control;
+            return parent.player.activeSelf ? IState.E_State.Unchanged : IState.E_State.Falling;
         }
     }
     class GameOverState : IState
@@ -106,6 +116,17 @@ public class PlayDirector : MonoBehaviour
             return IState.E_State.Unchanged;
         }
         public IState.E_State Update(PlayDirector parent) { return IState.E_State.Unchanged; }
+    }
+    class FallingState : IState
+    {
+        public IState.E_State Initialize(PlayDirector parent)
+        {
+            return parent._boardController.CheckFall() ? IState.E_State.Unchanged : IState.E_State.Control;
+        }
+        public IState.E_State Update(PlayDirector parent)
+        {
+            return parent._boardController.Fall() ? IState.E_State.Unchanged : IState.E_State.Control;
+        }
     }
     void InitialzeState()
     {
