@@ -9,6 +9,7 @@ public class PlayerController : MonoBehaviour
     const int GROUND_FRAMES = 50;
     const int TRANS_TIME = 3;
     const int ROT_TIME = 3;
+    uint _additiveScore = 0;
     enum RotState
     {
         Up = 0,
@@ -163,6 +164,7 @@ public class PlayerController : MonoBehaviour
             _last_position += Vector2Int.down;
             _fallCount += FALL_COUNT_UNIT;
         }
+        if (is_fast) _additiveScore++;
         return true;
     }
     void Control()
@@ -216,5 +218,11 @@ public class PlayerController : MonoBehaviour
         theta = theta0 + rate * theta;
 
         return p + new Vector3(Mathf.Sin(theta),Mathf.Cos(theta),0.0f);
+    }
+    public uint popScore()
+    {
+        uint score = _additiveScore;
+        _additiveScore = 0;
+        return score;
     }
 }

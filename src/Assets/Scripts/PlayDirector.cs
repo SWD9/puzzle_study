@@ -1,28 +1,31 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
+interface IState
+{
+    public enum E_State
+    {
+        Control = 0,
+        GameOver = 1,
+        Falling = 2,
+        Erasing = 3,
+
+        MAX,
+
+        Unchanged,
+    }
+    E_State Initialize(PlayDirector parent);
+    E_State Update(PlayDirector parent);
+}
 
 [RequireComponent(typeof(BoardController))]
 public class PlayDirector : MonoBehaviour
 {
-    interface IState
-    {
-        public enum E_State
-        {
-            Control = 0,
-            GameOver = 1,
-            Falling = 2,
-            Erasing = 3,
-
-            MAX,
-
-            Unchanged,
-        }
-        E_State Initialize(PlayDirector parent);
-        E_State Update(PlayDirector parent);
-    }
+    [SerializeField] TextMeshProUGUI textScore = default!;
+    uint _score = 0;
+    int _chainCount = -1;
     [SerializeField] GameObject player = default!;
     PlayerController _playerController = null;
     LogicalInput _logicalInput = new();
@@ -78,6 +81,9 @@ public class PlayDirector : MonoBehaviour
     {
         UpdateInput();
         UpdateState();
+
+        AddScore(_playerController.popScore());
+        AddScore(_boardController.popScore());
     }
     bool Spawn(Vector2Int next) => _playerController.Spawn((PuyoType)next[0], (PuyoType)next[1]);
 
@@ -121,7 +127,12 @@ public class PlayDirector : MonoBehaviour
     {
         public IState.E_State Initialize(PlayDirector parent)
         {
-            return parent._boardController.CheckErase() ? IState.E_State.Unchanged : IState.E_State.Control;
+            if (parent._boardController.CheckErase(parent._chainCount++))
+            {
+                return IState.E_State.Unchanged;
+            }
+            parent._chainCount = 0;
+            return IState.E_State.Control;
         }
         public IState.E_State Update(PlayDirector parent)
         {
@@ -150,5 +161,14 @@ public class PlayDirector : MonoBehaviour
             _current_state = next_state;
             InitialzeState();
         }
+    }
+    void SetScore(uint score)
+    {
+        _score = score;
+        textScore.text = _score.ToString();
+    }
+    void AddScore(uint score)
+    {
+        if(0 < score)SetScore(_score + score);
     }
 }

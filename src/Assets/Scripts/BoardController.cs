@@ -24,6 +24,8 @@ public class BoardController : MonoBehaviour
     int[,] _board = new int[BOARD_HEIGHT, BOARD_WIDTH];
     GameObject[,] _Puyos = new GameObject[BOARD_HEIGHT, BOARD_WIDTH];
 
+    uint _additiveScore = 0;
+
     List<FallData> _falls = new ();
     int _fallFrames = 0;
     List<Vector2Int> _erases = new();
@@ -118,12 +120,28 @@ public class BoardController : MonoBehaviour
         }
         return _falls.Count != 0;
     }
+    static readonly uint[] chainBonusTbl = new uint[]{
+        0,8,16,32,64,
+        96,128,160,192,224,
+        256,288,320,352,384,
+        416,448,480,512};
+    static readonly uint[] connectBonusTbl = new uint[]{
+        0,0,0,0,0,2,3,4,5,6,7,
+    };
+    static readonly uint[] colorBonusTbl = new uint[]{
+        0,3,6,12,24,
+    };
     static readonly Vector2Int[] search_tbl = new Vector2Int[] { Vector2Int.up, Vector2Int.right, Vector2Int.down, Vector2Int.left };
-    public bool CheckErase()
+    public bool CheckErase(int chainCount)
     {
         _eraseFrames = 0;
         _erases.Clear();
         uint[] isChecked = new uint[BOARD_HEIGHT];
+
+        int puyoCount = 0;
+        uint colorBits = 0;
+        uint connectBonus = 0;
+
         List<Vector2Int> add_list = new();
         for(int y = 0;y < BOARD_HEIGHT; y++)
         {
@@ -135,6 +153,8 @@ public class BoardController : MonoBehaviour
 
                 int type = _board[y, x];
                 if(type == 0)continue;
+
+                puyoCount++;
 
                 System.Action<Vector2Int> get_connection = null;
                 get_connection = (pos) =>
@@ -156,9 +176,24 @@ public class BoardController : MonoBehaviour
                 get_connection(new Vector2Int(x,y));
                 if(4 <= add_list.Count)
                 {
+                    connectBonus += connectBonusTbl[System.Math.Min(add_list.Count, connectBonusTbl.Length - 1)];
+                    colorBits |= (1u << type);
                     _erases.AddRange(add_list);
                 }
             }
+        }
+        if(chainCount != -1)
+        {
+            uint colorNum = 0;
+            for (;0 < colorBits;colorBits >>= 1)
+            {
+                colorNum += (colorBits & 1u);
+            }
+            uint colorBonus = colorBonusTbl[System.Math.Min(colorNum, colorBonusTbl.Length - 1)];
+            uint chainBonus = chainBonusTbl[System.Math.Min(chainCount,chainBonusTbl.Length - 1)];
+            uint bonus = System.Math.Max(1,chainBonus + connectBonus + colorBonus);
+            _additiveScore += 10 * (uint)_erases.Count * bonus;
+            if(puyoCount == 0)_additiveScore += 1800;
         }
         return _erases.Count != 0;
     }
@@ -182,5 +217,11 @@ public class BoardController : MonoBehaviour
             _Puyos[d.y, d.x].transform.localScale = Vector3.one * t; ;
         }
         return true;
+    }
+    public uint popScore()
+    {
+        uint score = _additiveScore;
+        _additiveScore = 0;
+        return score;
     }
 }
