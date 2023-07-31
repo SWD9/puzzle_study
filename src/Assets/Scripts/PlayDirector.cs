@@ -11,6 +11,7 @@ interface IState
         GameOver = 1,
         Falling = 2,
         Erasing = 3,
+        Waiting = 4,
 
         MAX,
 
@@ -38,6 +39,7 @@ public class PlayDirector : MonoBehaviour
         new GameOverState(),
         new FallingState(),
         new ErasingState(),
+        new WaitingState(),
     };
     void Start()
     {
@@ -47,7 +49,10 @@ public class PlayDirector : MonoBehaviour
         _playerController.SetLogicalInput(_logicalInput);
 
         _nextQueue.Initialize();
+        UpdateNextsView();
         InitialzeState();
+
+        SetScore(0);
     }
     void UpdateNextsView()
     {
@@ -132,11 +137,19 @@ public class PlayDirector : MonoBehaviour
                 return IState.E_State.Unchanged;
             }
             parent._chainCount = 0;
-            return IState.E_State.Control;
+            return parent._canSpawn ? IState.E_State.Control : IState.E_State.Waiting;
         }
         public IState.E_State Update(PlayDirector parent)
         {
             return parent._boardController.Erase() ? IState.E_State.Unchanged : IState.E_State.Falling;
+        }
+    }
+    class WaitingState : IState
+    {
+        public IState.E_State Initialize(PlayDirector parent) { return IState.E_State.Unchanged; }
+        public IState.E_State Update(PlayDirector parent)
+        {
+            return parent._canSpawn ? IState.E_State.Control : IState.E_State.Unchanged;
         }
     }
     void InitialzeState()
@@ -170,5 +183,14 @@ public class PlayDirector : MonoBehaviour
     void AddScore(uint score)
     {
         if(0 < score)SetScore(_score + score);
+    }
+    bool _canSpawn = false;
+    public void EnableSpawn(bool enable)
+    {
+        _canSpawn = enable;
+    }
+    public bool IsGameOver()
+    {
+        return _current_state == IState.E_State.GameOver;
     }
 }
